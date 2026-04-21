@@ -1,1 +1,3 @@
 # NPNtransistorSilvaco
+
+##Common Emitter Configuration
