@@ -1,0 +1,89 @@
+go atlas
+
+# ---------------- MESH ----------------
+mesh space.mult=1.0
+
+x.mesh loc=0.0 spac=0.05
+x.mesh loc=0.4 spac=0.01
+x.mesh loc=0.6 spac=0.01
+x.mesh loc=1.0 spac=0.05
+
+y.mesh loc=0.0 spac=0.01
+y.mesh loc=0.5 spac=0.01
+y.mesh loc=0.6 spac=0.01
+y.mesh loc=5.0 spac=0.5
+
+# ---------------- REGIONS ----------------
+region num=1 material=Silicon x.min=0.0 x.max=0.4 y.min=0.0 y.max=0.6
+region num=2 material=Silicon x.min=0.4 x.max=1.0 y.min=0.5 y.max=0.6
+region num=3 material=Silicon x.min=0.6 x.max=1.0 y.min=0.0 y.max=0.5
+region num=4 material=Silicon x.min=0.0 x.max=1.0 y.min=0.6 y.max=5.0
+region num=5 material=SiO2   x.min=0.4 x.max=0.6 y.min=0.0 y.max=0.5
+
+# ---------------- ELECTRODES ----------------
+electrode name=base x.min=0.0 x.max=0.4 y.min=0.0 y.max=0.0
+electrode name=emitter x.min=0.6 x.max=1.0 y.min=0.0 y.max=0.0
+electrode name=collector x.min=0.0 x.max=1.0 y.min=5.0 y.max=5.0
+doping n.type conc=1e16 region=4 
+doping p.type conc=8e17 region=2
+  doping p.type conc=1e19 region=1
+ doping n.type conc=1e20 region=3
+
+# ---------------- MODELS ----------------
+models srh auger bgn conmob fldmob print
+method newton itlimit=25
+
+# =========================================================
+# INPUT CHARACTERISTICS (IB vs VBE for different VCE)
+# =========================================================
+
+# -------- CURVE 1 (VCE = 1V) --------
+solve init
+solve vcollector=0
+solve vcollector=1 name=collector
+
+log outf=ib_vbe_vce1.log
+solve vbase=0.0 vstep=0.02 vfinal=1.2 name=base
+log off
+
+
+# -------- CURVE 2 (VCE = 3V) --------
+solve init
+solve vcollector=0
+solve vcollector=3 name=collector
+
+log outf=ib_vbe_vce3.log
+solve vbase=0.0 vstep=0.02 vfinal=1.2 name=base
+log off
+
+
+# -------- CURVE 3 (VCE = 5V) --------
+solve init
+solve vcollector=0
+solve vcollector=5 name=collector
+
+log outf=ib_vbe_vce5.log
+solve vbase=0.0 vstep=0.02 vfinal=1.2 name=base
+log off
+
+# ---------------- PLOT INPUT CHARACTERISTICS ----------------
+tonyplot -overlay ib_vbe_vce1.log ib_vbe_vce3.log ib_vbe_vce5.log
+
+# =========================================================
+# OUTPUT CHARACTERISTICS (IC vs VCE)
+# =========================================================
+
+solve init
+log outf=output_ic.log
+
+solve vbase=0.7 name=base
+solve vcollector=0 vstep=0.2 vfinal=5 name=collector
+
+log off
+tonyplot output_ic.log
+
+# ---------------- SAVE STRUCTURE ----------------
+save outf=bjt_final.str
+tonyplot bjt_final.str
+
+quit
